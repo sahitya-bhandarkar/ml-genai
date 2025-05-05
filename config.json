@@ -1,0 +1,41 @@
+{
+  "allow_roleassignment_on_rg": true,
+  "application_insights": "/subscriptions/fab44472-0973-4076-9510-0275bd3ab40a/resourceGroups/RG-UC05/providers/Microsoft.insights/components/mlwsuc05insightsaf46d1fb",
+  "description": "MLWS-UC05",
+  "discovery_url": "https://eastus.api.azureml.ms/discovery",
+  "display_name": "MLWS-UC05",
+  "enable_data_isolation": false,
+  "hbi_workspace": false,
+  "id": "/subscriptions/fab44472-0973-4076-9510-0275bd3ab40a/resourceGroups/RG-UC05/providers/Microsoft.MachineLearningServices/workspaces/MLWS-UC05",
+  "identity": {
+    "principal_id": "d3d24bad-7dc5-437d-a7f5-87117e95c459",
+    "tenant_id": "b69eefee-f0a7-410b-b594-e4f23ba11195",
+    "type": "system_assigned"
+  },
+  "key_vault": "/subscriptions/fab44472-0973-4076-9510-0275bd3ab40a/resourceGroups/RG-UC05/providers/Microsoft.Keyvault/vaults/mlwsuc05keyvaultf0d7cb28",
+  "location": "eastus",
+  "managed_network": {
+    "isolation_mode": "disabled",
+    "outbound_rules": []
+  },
+  "mlflow_tracking_uri": "azureml://eastus.api.azureml.ms/mlflow/v1.0/subscriptions/fab44472-0973-4076-9510-0275bd3ab40a/resourceGroups/RG-UC05/providers/Microsoft.MachineLearningServices/workspaces/MLWS-UC05",
+  "name": "MLWS-UC05",
+  "network_acls": {
+    "default_action": "Allow",
+    "ip_rules": []
+  },
+  "provision_network_now": false,
+  "public_network_access": "Enabled",
+  "resourceGroup": "RG-UC05",
+  "resource_group": "RG-UC05",
+  "serverless_compute": {
+    "no_public_ip": false
+  },
+  "storage_account": "/subscriptions/fab44472-0973-4076-9510-0275bd3ab40a/resourceGroups/RG-UC05/providers/Microsoft.Storage/storageAccounts/mlwsuc05storageb1e40ccd2",
+  "subscription_id": "fab44472-0973-4076-9510-0275bd3ab40a",
+  "system_datastores_auth_mode": "accesskey",
+  "tags": {
+    "createdByToolkit": "cli-v2-1.26.3"
+  },
+  "workspace_name": "MLWS-UC05"
+}

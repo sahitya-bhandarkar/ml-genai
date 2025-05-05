@@ -419,3 +419,7 @@ print(f"Neural Network Matched Anomalies with Ground Truth: {nn_matched_anomalie
 now = datetime.datetime.now()
 print("Current date and time after full run: ")
 print(now.strftime("%Y-%m-%d %H:%M:%S"))
+
+# Save the trained Random Forest model
+import joblib
+joblib.dump(rf_model, "model.pkl")
