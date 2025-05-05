@@ -7,13 +7,12 @@ from sklearn.ensemble import RandomForestClassifier
 from xgboost import XGBClassifier
 from sklearn.linear_model import LogisticRegression
 import os
-import openai
-from openai.types import CreateEmbeddingResponse, Embedding
 import numpy as np
 from scipy.spatial.distance import pdist, squareform
 import concurrent.futures
 from sklearn.decomposition import PCA
 import datetime
+from sentence_transformers import SentenceTransformer
 
 # Load the dataset
 df = pd.read_csv("simulated_transactions.csv")
@@ -38,7 +37,7 @@ df['timestamp'] = pd.to_datetime(df['timestamp'])
 df = df.set_index('timestamp').sort_index()
 
 # Count the number of transactions for each credit card within a certain time window
-time_window = '1H'  # One hour time window
+time_window = '1h'  # One hour time window
 df['countTransac'] = df.groupby('creditCard').rolling(time_window)['amount'].count().reset_index(0, drop=True)
 
 # Reset index after the rolling operation
@@ -82,23 +81,18 @@ print("Current date and time after random forest: ")
 print(now.strftime("%Y-%m-%d %H:%M:%S"))
 
 # embeddings
+embedding_model = SentenceTransformer('all-MiniLM-L6-v2')  # A lightweight, fast model
 
-os.environ["OPENAI_API_KEY"] = "your key"
-client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+#os.environ["OPENAI_API_KEY"] = "your key"
+#client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
-# Function to get embeddings from OpenAI
-def get_embeddings_parallel(texts):
-    with concurrent.futures.ThreadPoolExecutor() as executor:
-        # Map the executor to the function and texts
-        futures = [executor.submit(get_single_embedding, text) for text in texts]
-        return [future.result() for future in concurrent.futures.as_completed(futures)]
-
+# Function to get embeddings for a single text
 def get_single_embedding(text):
-    response = client.embeddings.create(
-        model="text-embedding-ada-002",
-        input=text
-    )
-    return response.data[0].embedding
+    return embedding_model.encode(text)
+
+# Function to get embeddings for multiple texts in parallel
+def get_embeddings_parallel(texts):
+    return embedding_model.encode(texts, batch_size=32, show_progress_bar=True)
 
 
 
@@ -110,37 +104,27 @@ print("Number of rows in df_test:", len(df_test))
 embeddings_file = 'embeddings_test.npy'
 
 
-# Check if embeddings file exists
-if os.path.exists(embeddings_file):
-    print("Embeddings file FOUND!")
-    # Load embeddings from file
-    embeddings_array = np.load(embeddings_file)
-else:
+if not os.path.exists(embeddings_file):
     print("Embeddings file NOT FOUND!")
-    # Convert numerical fields to strings and concatenate them for embeddings
+    # Combine features into a single text column
     df_test['combined'] = df_test['type'] + " " + df_test['amount'].astype(str) + " " + \
-                      df_test['oldbalanceOrg'].astype(str) + " " + df_test['newbalanceOrg'].astype(str) + " " + \
-                      df_test['oldbalanceDest'].astype(str) + " " + df_test['newbalanceDest'].astype(str) + " " + \
-                      df_test['nameOrig'] + " " + df_test['nameDest'] + " " + df_test['timestamp'].astype(str) + " " + \
-                      X_test['largeAmount'].astype(str) + " " + \
-                      X_test['changebalanceOrig'].astype(str) + " " + \
-                      X_test['changebalanceDest'].astype(str) + " " + \
-                      X_test['countTransac'].astype(str)
-    
-    # For one-hot encoded features, add them as strings
-    for col in type_one_hot.columns:
-        if col in df_test.columns:
-            df_test['combined'] += " " + col + "_" + df_test[col].astype(str)
-        
-    # Get embeddings for the combined column
-    combined_texts = df_test['combined'].tolist()
-    embeddings_list = get_embeddings_parallel(combined_texts)
+                          df_test['oldbalanceOrg'].astype(str) + " " + df_test['newbalanceOrg'].astype(str) + " " + \
+                          df_test['oldbalanceDest'].astype(str) + " " + df_test['newbalanceDest'].astype(str) + " " + \
+                          df_test['nameOrig'] + " " + df_test['nameDest'] + " " + df_test['timestamp'].astype(str) + " " + \
+                          X_test['largeAmount'].astype(str) + " " + \
+                          X_test['changebalanceOrig'].astype(str) + " " + \
+                          X_test['changebalanceDest'].astype(str) + " " + \
+                          X_test['countTransac'].astype(str)
 
-    # Flatten each embedding to make it 1D and convert to a 2D array
-    embeddings_array = np.array([np.array(embedding).flatten() for embedding in embeddings_list])
+    # Generate embeddings locally
+    combined_texts = df_test['combined'].tolist()
+    embeddings_array = get_embeddings_parallel(combined_texts)
 
     # Save the embeddings to a file for future use
     np.save('embeddings_test.npy', embeddings_array)
+else:
+    print("Embeddings file FOUND!")
+    embeddings_array = np.load(embeddings_file)
 
 
 # Normalize the embeddings using StandardScaler
@@ -352,7 +336,7 @@ print("Embedding-Cosine Approach:", match_count_embedding)
 print("Embedding-Euclidean Approach:", match_count_euclidean)
 
 #neural net section
-
+os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
 import pandas as pd
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import StandardScaler, OneHotEncoder
@@ -366,7 +350,7 @@ df = pd.read_csv("simulated_transactions.csv")
 
 # Preprocessing
 # One-hot encoding for categorical features
-encoder = OneHotEncoder(sparse=False)
+encoder = OneHotEncoder(sparse_output=False)
 type_encoded = encoder.fit_transform(df[['type']])
 
 # Numerical features
