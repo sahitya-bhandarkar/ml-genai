@@ -5,3 +5,5 @@ imbalanced-learn
 xgboost
 openai
 scipy
+azure-ai-ml
+azure-identity
